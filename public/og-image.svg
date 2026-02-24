@@ -1,0 +1,48 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#011C40"/>
+      <stop offset="100%" style="stop-color:#03318C"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#F26D3D"/>
+      <stop offset="100%" style="stop-color:#d65a2d"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Grid pattern -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(242,109,61,0.1)" stroke-width="1"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  
+  <!-- Logo/Brand -->
+  <text x="100" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="white">
+    Analyticatech
+  </text>
+  
+  <!-- Accent line -->
+  <rect x="100" y="310" width="200" height="4" rx="2" fill="url(#accent)"/>
+  
+  <!-- Tagline -->
+  <text x="100" y="380" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="rgba(255,255,255,0.8)">
+    Expert IA, Data Science & Automatisation
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="100" y="430" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="rgba(255,255,255,0.5)">
+    Transformez vos données en avantage compétitif
+  </text>
+  
+  <!-- Decorative elements -->
+  <circle cx="1000" cy="200" r="150" fill="rgba(242,109,61,0.1)"/>
+  <circle cx="1050" cy="450" r="100" fill="rgba(3,49,140,0.2)"/>
+  
+  <!-- URL -->
+  <text x="100" y="570" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="rgba(255,255,255,0.4)">
+    analyticatech.com
+  </text>
+</svg>

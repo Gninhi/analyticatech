@@ -1,0 +1,54 @@
+import { z } from 'zod';
+
+/**
+ * CONFIGURATION ENVIRONNEMENT
+ * Centralise et valide toutes les variables d'environnement.
+ * Toutes les clés sensibles doivent être dans le fichier .env
+ */
+
+const envSchema = z.object({
+  MODE: z.enum(['development', 'production', 'test']).default('development'),
+  VITE_DEGRADED_MODE: z.coerce.boolean().default(false),
+  VITE_SUPABASE_URL: z.string().url().optional(),
+  VITE_SUPABASE_ANON_KEY: z.string().optional(),
+  VITE_POSTHOG_KEY: z.string().optional(),
+  VITE_POSTHOG_HOST: z.string().url().default('https://eu.i.posthog.com'),
+});
+
+// Helper to safely access import.meta.env
+const metaEnv = (import.meta as any).env || {};
+
+const _env = {
+  MODE: metaEnv.MODE,
+  VITE_DEGRADED_MODE: metaEnv.VITE_DEGRADED_MODE,
+  VITE_SUPABASE_URL: metaEnv.VITE_SUPABASE_URL,
+  VITE_SUPABASE_ANON_KEY: metaEnv.VITE_SUPABASE_ANON_KEY,
+  VITE_POSTHOG_KEY: metaEnv.VITE_POSTHOG_KEY,
+  VITE_POSTHOG_HOST: metaEnv.VITE_POSTHOG_HOST,
+};
+
+const parsedEnv = envSchema.safeParse(_env);
+
+if (!parsedEnv.success) {
+  console.warn('⚠️ Configuration environnement partielle :', parsedEnv.error.format());
+}
+
+export const config = {
+  app: {
+    name: 'Analyticatech',
+    version: '3.2.1',
+    isProduction: metaEnv.PROD,
+    isDegraded: parsedEnv.success ? parsedEnv.data.VITE_DEGRADED_MODE : false,
+  },
+  supabase: {
+    url: parsedEnv.success ? (parsedEnv.data.VITE_SUPABASE_URL || '') : '',
+    key: parsedEnv.success ? (parsedEnv.data.VITE_SUPABASE_ANON_KEY || '') : '',
+  },
+  api: {
+    timeout: 8000,
+  },
+  analytics: {
+    key: parsedEnv.success ? (parsedEnv.data.VITE_POSTHOG_KEY || '') : '',
+    host: parsedEnv.success ? parsedEnv.data.VITE_POSTHOG_HOST : 'https://eu.i.posthog.com',
+  }
+};

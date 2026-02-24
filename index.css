@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* GLOBAL STYLES */
+html { 
+  scroll-behavior: initial; 
+  /* Core Web Vitals: Prevent layout shift */
+  overflow-y: scroll;
+}
+
+html.lenis {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  min-height: 100vh;
+  /* Core Web Vitals: font-display optimization */
+  font-display: optional;
+}
+
+/* Google Core Web Vitals: Reduce CLS with image aspect ratios */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Prevent layout shifts for loading states */
+[data-loading="true"] {
+  min-height: 200px;
+}
+
+/* Force dark background default */
+html.dark body {
+  background-color: #000000;
+  color: #f1f5f9;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+.dark ::-webkit-scrollbar-track { background: #000000; }
+
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.dark ::-webkit-scrollbar-thumb { background: #1e293b; }
+
+::-webkit-scrollbar-thumb:hover { background: #F26D3D; }
+
+/* CSS Houdini Custom Properties for Shiny Buttons */
+@property --gradient-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@property --gradient-angle-offset {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@property --position {
+  syntax: '<length-percentage>';
+  initial-value: 50%;
+  inherits: false;
+}
+
+/* Shiny Button Animation */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+.shiny-cta {
+  position: relative;
+  animation: border-spin 2.5s linear infinite;
+}
+
+@keyframes border-spin {
+  to {
+    --gradient-angle: 360deg;
+  }
+}
+
+/* Light mode adjustments for shiny button */
+.shiny-cta {
+  background: linear-gradient(#03318C, #022873) padding-box,
+              conic-gradient(from var(--gradient-angle), transparent 0%, #F26D3D 10%, #03318C 20%, transparent 30%) border-box;
+  border: 2px solid transparent;
+}
+
+.dark .shiny-cta {
+  background: linear-gradient(#011C40, #03318C) padding-box,
+              conic-gradient(from var(--gradient-angle), transparent 0%, #F26D3D 10%, #03318C 20%, transparent 30%) border-box;
+}
+
+/* Card styles for light mode */
+.card-tech-light {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(226, 232, 240, 1);
+}
+
+.dark .card-tech-dark {
+  background: rgba(0, 5, 16, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
