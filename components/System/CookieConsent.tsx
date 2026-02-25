@@ -17,6 +17,7 @@ const CookieConsent: React.FC = () => {
       const timer = setTimeout(() => setIsVisible(true), 2500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, []);
 
   const handleAccept = () => {

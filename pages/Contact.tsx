@@ -5,12 +5,14 @@ import { Mail, MapPin, Send, Loader2, Check, ShieldCheck, Lock } from 'lucide-re
 import Card from '../components/UI/Card';
 import Button from '../components/UI/Button';
 import AnimatedHeading from '../components/UI/AnimatedHeading';
+import Turnstile from '../components/UI/Turnstile';
 import { checkRateLimit, recordSubmission, generateProofOfWork, sanitizeInput } from '../utils/security';
 import { usePageSEO } from '../hooks/usePageSEO';
 import { ContactSchema, ContactFormData } from '../utils/schemas';
 import { z } from 'zod';
 import { useI18n } from '../components/System/I18nProvider';
 import { supabase } from '../lib/supabase';
+import { config } from '../config/env';
 
 const Contact: React.FC = () => {
   const { t } = useI18n();
@@ -23,6 +25,7 @@ const Contact: React.FC = () => {
   const [status, setStatus] = useState<'idle' | 'computing' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [turnstileToken, setTurnstileToken] = useState<string>('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -58,6 +61,16 @@ const Contact: React.FC = () => {
 
     if (!validateForm()) return;
     if (!checkRateLimit()) { setStatus('error'); setErrorMessage(t('contact.error.rate_limit')); return; }
+
+    const hasCaptcha = config.turnstile.siteKey && 
+                       config.turnstile.siteKey !== '' && 
+                       config.turnstile.siteKey !== 'YOUR_TURNSTILE_SITE_KEY_HERE';
+
+    if (hasCaptcha && !turnstileToken) {
+      setStatus('error');
+      setErrorMessage('Veuillez compléter le CAPTCHA.');
+      return;
+    }
 
     // Étape 1: Génération du Proof of Work (sécurité anti-bot)
     setStatus('computing');
@@ -178,6 +191,8 @@ const Contact: React.FC = () => {
                       <textarea name="message" required rows={5} value={formData.message} onChange={handleChange} className={`w-full bg-slate-50 dark:bg-[#000510] border ${fieldErrors.message ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl px-5 py-4 text-slate-900 dark:text-white focus:border-analytica-accent focus:ring-1 focus:ring-analytica-accent outline-none resize-none transition-all`} placeholder={t('contact.form.message_ph')}></textarea>
                       {fieldErrors.message && <span className="text-red-500 text-xs ml-1">{fieldErrors.message}</span>}
                     </div>
+
+                    <Turnstile onSuccess={(token) => setTurnstileToken(token)} onError={() => setTurnstileToken('')} />
 
                     {status === 'error' && (
                       <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm font-medium flex items-center gap-2">

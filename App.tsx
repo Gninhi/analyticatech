@@ -1,6 +1,6 @@
 
 import React, { Suspense, lazy } from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
 // --- SYSTEM & UTILS ---

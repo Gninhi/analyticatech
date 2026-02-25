@@ -31,7 +31,7 @@ const ScrambleText: React.FC<ScrambleTextProps> = memo(({
         setDisplay(
           text
             .split("")
-            .map((letter, index) => {
+            .map((_, index) => {
               if (index < iteration) return text[index];
               if (text[index] === ' ') return ' ';
               return CHARS[Math.floor(Math.random() * CHARS.length)];

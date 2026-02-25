@@ -12,8 +12,8 @@ import { useI18n } from '../components/System/I18nProvider';
  */
 
 // Global cache for data deduplication
-const cache = new Map<string, { data: any; timestamp: number }>();
-const pendingRequests = new Map<string, Promise<any>>();
+const cache = new Map<string, { data: unknown; timestamp: number }>();
+const pendingRequests = new Map<string, Promise<unknown>>();
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -49,7 +49,7 @@ function useDataFetcher<T>(
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       if (isMountedRef.current) {
-        setData(cached.data);
+        setData(cached.data as T);
         setIsLoading(false);
       }
       return;
@@ -60,7 +60,7 @@ function useDataFetcher<T>(
     if (pending) {
       pending.then((result) => {
         if (isMountedRef.current) {
-          setData(result);
+          setData(result as T);
           setIsLoading(false);
         }
       });

@@ -19,12 +19,13 @@
   <link rel="alternate" hreflang="en" href="https://analyticatech.com/?lang=en" />
   <link rel="alternate" hreflang="x-default" href="https://analyticatech.com" />
 
-  <!-- SECURITY -->
+  <!-- SECURITY HEADERS -->
   <meta http-equiv="X-XSS-Protection" content="1; mode=block">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://eu.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://jorlivdlzdstkmahecmr.supabase.co https://eu.i.posthog.com https://fonts.googleapis.com https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
-  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()">
+  <!-- CSP Strict - No unsafe-inline for scripts -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' https://eu.i.posthog.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://jorlivdlzdstkmahecmr.supabase.co https://eu.i.posthog.com https://fonts.googleapis.com https://fonts.gstatic.com https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), accelerometer=(), gyroscope=(), magnetometer=()">
 
   <!-- FAVICONS -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -46,7 +47,7 @@
   <meta name="twitter:site" content="@analyticatech" />
   <meta name="twitter:title" content="Analyticatech | Cabinet Expert IA & Data" />
   <meta name="twitter:description" content="Transformez vos données en avantage compétitif avec nos experts IA et Data Science." />
-  <meta name="twitter:image" content="https://analyticatech.com/og-image.jpg" />
+  <meta name="twitter:image" content="https://analyticatech.com/og-image.svg" />
 
   <!-- GEO TAGS -->
   <meta name="geo.region" content="FR-IDF" />

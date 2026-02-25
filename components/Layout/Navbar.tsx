@@ -21,7 +21,7 @@ const useScramble = (text: string, trigger: boolean) => {
         setDisplay(
           text
             .split("")
-            .map((letter, index) => {
+            .map((_, index) => {
               if (index < iteration) return text[index];
               return chars[Math.floor(Math.random() * chars.length)];
             })
@@ -31,9 +31,9 @@ const useScramble = (text: string, trigger: boolean) => {
         iteration += 1 / 3;
       }, 30);
       return () => clearInterval(interval);
-    } else {
-      setDisplay(text);
     }
+    setDisplay(text);
+    return undefined;
   }, [trigger, text]);
 
   return display;

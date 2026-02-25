@@ -9,7 +9,7 @@ const ScrollToTop = () => {
   const { pathname, hash } = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => {
+    const handleScroll = (): boolean => {
       if (hash) {
         const id = hash.replace('#', '');
         const element = document.getElementById(id);
@@ -25,7 +25,8 @@ const ScrollToTop = () => {
     };
 
     // Tentative immédiate + Polling léger (max 5 tentatives)
-    if (!handleScroll()) {
+    const scrollResult = handleScroll();
+    if (!scrollResult) {
       let attempts = 0;
       const maxAttempts = 5;
       const interval = setInterval(() => {
@@ -37,6 +38,7 @@ const ScrollToTop = () => {
       
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [pathname, hash]);
 
   return null;

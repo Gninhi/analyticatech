@@ -13,10 +13,23 @@ const envSchema = z.object({
   VITE_SUPABASE_ANON_KEY: z.string().optional(),
   VITE_POSTHOG_KEY: z.string().optional(),
   VITE_POSTHOG_HOST: z.string().url().default('https://eu.i.posthog.com'),
+  VITE_TURNSTILE_SITE_KEY: z.string().optional(),
 });
 
 // Helper to safely access import.meta.env
-const metaEnv = (import.meta as any).env || {};
+interface ImportMetaEnv {
+  MODE?: string;
+  PROD?: boolean;
+  DEV?: boolean;
+  VITE_DEGRADED_MODE?: string;
+  VITE_SUPABASE_URL?: string;
+  VITE_SUPABASE_ANON_KEY?: string;
+  VITE_POSTHOG_KEY?: string;
+  VITE_POSTHOG_HOST?: string;
+  VITE_TURNSTILE_SITE_KEY?: string;
+}
+
+const metaEnv: ImportMetaEnv = (import.meta as unknown as { env: ImportMetaEnv }).env || {};
 
 const _env = {
   MODE: metaEnv.MODE,
@@ -25,6 +38,7 @@ const _env = {
   VITE_SUPABASE_ANON_KEY: metaEnv.VITE_SUPABASE_ANON_KEY,
   VITE_POSTHOG_KEY: metaEnv.VITE_POSTHOG_KEY,
   VITE_POSTHOG_HOST: metaEnv.VITE_POSTHOG_HOST,
+  VITE_TURNSTILE_SITE_KEY: metaEnv.VITE_TURNSTILE_SITE_KEY,
 };
 
 const parsedEnv = envSchema.safeParse(_env);
@@ -50,5 +64,8 @@ export const config = {
   analytics: {
     key: parsedEnv.success ? (parsedEnv.data.VITE_POSTHOG_KEY || '') : '',
     host: parsedEnv.success ? parsedEnv.data.VITE_POSTHOG_HOST : 'https://eu.i.posthog.com',
+  },
+  turnstile: {
+    siteKey: parsedEnv.success ? (parsedEnv.data.VITE_TURNSTILE_SITE_KEY || '') : '',
   }
 };

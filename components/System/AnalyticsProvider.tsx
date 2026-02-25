@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import analytics from '../../utils/analytics';
 
 interface AnalyticsContextType {
-  trackEvent: (name: string, props?: any) => void;
+  trackEvent: (name: string, props?: Record<string, unknown>) => void;
   grantConsent: () => void;
   denyConsent: () => void;
   hasConsent: boolean;
