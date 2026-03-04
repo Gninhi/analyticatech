@@ -77,20 +77,32 @@ async function fetchData<T>(
           return data.map(item => snakeToCamel(item));
         }
 
+        // If it's a "table not found" error, we try the next candidate
         if (
-          error.code === '42P01' ||
-          error.code === '42703' ||
-          error.message?.includes('Could not find the table') ||
-          error.message?.includes('does not exist')
+          error && (
+            error.code === '42P01' ||
+            error.code === '42703' ||
+            error.message?.includes('Could not find the table') ||
+            error.message?.includes('does not exist')
+          )
         ) {
+          devWarn(`[Supabase] Table non trouvée : "${table}". Tentative suivante...`);
           continue;
         }
 
-        devError(`[Supabase] Erreur technique sur "${table}":`, error.message);
-        throw error;
+        // For other technical errors (network, auth, etc.), we log and throw to allow the top-level catch to handle it
+        if (error) {
+          devError(`[Supabase] Erreur technique sur "${table}":`, error.message);
+          throw error;
+        }
       }
     } catch (err) {
-      devWarn(`[Supabase] Utilisation des données locales pour "${logicalTable}".`, err);
+      devError(`[Supabase] Exception lors de la récupération de "${logicalTable}":`, err);
+      // We only re-throw to let the tests/caller detect failure if they expect it
+      // But we still return fallback for production resilience if needed
+      if (isLiveMode()) {
+        throw err;
+      }
     }
   }
 
@@ -130,9 +142,9 @@ class HybridContentService {
     });
   }
 
-  async getServiceById(id: string, locale: Locale): Promise<Service<string> | undefined> {
+  async getServiceById(id: string, locale: Locale): Promise<Service<string> | null> {
     const services = await this.getServices(locale);
-    return services.find(s => s.id === id);
+    return services.find(s => s.id === id) || null;
   }
 
   async getSolutions(locale: Locale): Promise<Solution<string>[]> {
@@ -169,9 +181,9 @@ class HybridContentService {
     });
   }
 
-  async getSolutionById(id: string, locale: Locale): Promise<Solution<string> | undefined> {
+  async getSolutionById(id: string, locale: Locale): Promise<Solution<string> | null> {
     const solutions = await this.getSolutions(locale);
-    return solutions.find(s => s.id === id);
+    return solutions.find(s => s.id === id) || null;
   }
 
   async getResources(locale: Locale, category: string = 'all'): Promise<Resource<string>[]> {

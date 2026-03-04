@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, Sun, Moon, Command, ChevronRight } from 'lucide-react';
+import { Menu, X, Command, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { animateScroll as scroll } from 'react-scroll';
-import { ThemeMode } from '../../types/index';
 import Logo from '../UI/Logo';
 import Button from '../UI/Button';
+import ProtocolDropdown from '../UI/ProtocolDropdown';
 import { NAV_ITEMS } from '../../data/constants';
 import { useI18n } from '../System/I18nProvider';
+import { themeClasses } from '../../lib/theme-classes';
 
 // --- SCRAMBLE LOGIC ---
 const useScramble = (text: string, trigger: boolean) => {
@@ -65,15 +66,14 @@ const NavLinkItem = ({ item, locale }: { item: typeof NAV_ITEMS[0], locale: 'fr'
       to={item.path}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative px-4 py-2 text-xs transition-all duration-300 rounded-lg flex items-center gap-2 group overflow-hidden ${isActive
-        ? 'text-analytica-main dark:text-white'
-        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-        }`}
+      className={`relative px-4 py-2 text-xs transition-all duration-300 rounded-lg flex items-center gap-2 group overflow-hidden
+        ${isActive ? themeClasses.text.nav.active : `${themeClasses.text.nav.inactive} hover:text-slate-900 dark:hover:text-white`}
+      `}
     >
       {isActive && (
         <motion.span
           layoutId="navbar-active-pill"
-          className="absolute inset-0 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg -z-10 shadow-sm"
+          className={`absolute inset-0 ${themeClasses.navPill.active} rounded-lg -z-10`}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         />
       )}
@@ -81,7 +81,7 @@ const NavLinkItem = ({ item, locale }: { item: typeof NAV_ITEMS[0], locale: 'fr'
       {!isActive && isHovered && (
         <motion.span
           layoutId="navbar-hover-pill"
-          className="absolute inset-0 bg-slate-100 dark:bg-white/5 rounded-lg -z-10"
+          className={`absolute inset-0 ${themeClasses.navPill.hover} rounded-lg -z-10`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -104,48 +104,17 @@ const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isLogoHovered, setIsLogoHovered] = useState(false);
-  const [theme, setTheme] = useState<ThemeMode>(ThemeMode.DARK);
   const location = useLocation();
-  const { locale, setLocale, t } = useI18n();
+  const { locale, t } = useI18n();
 
-  // Initialisation du thème avec persistance
+  // Scroll detection only — theme is now managed by ThemeProvider
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
-
-    // Check localStorage or system preference
-    const savedTheme = localStorage.getItem('analytica_theme');
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
-      document.documentElement.classList.add('dark');
-      setTheme(ThemeMode.DARK);
-    } else {
-      document.documentElement.classList.remove('dark');
-      setTheme(ThemeMode.LIGHT);
-    }
-
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const toggleTheme = () => {
-    if (theme === ThemeMode.DARK) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('analytica_theme', 'light');
-      setTheme(ThemeMode.LIGHT);
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('analytica_theme', 'dark');
-      setTheme(ThemeMode.DARK);
-    }
-  };
-
-  const toggleLanguage = () => {
-    const newLocale = locale === 'fr' ? 'en' : 'fr';
-    setLocale(newLocale);
-  };
 
   const handleLogoClick = (e: React.MouseEvent) => {
     if (location.pathname === '/') {
@@ -164,11 +133,15 @@ const Navbar: React.FC = () => {
         : 'bg-transparent border-transparent py-5'
         }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        {/* Structure : Logo | Nav centré | Actions — sans position:absolute */}
+        <div className="flex items-center h-14 w-full gap-4" data-testid="navbar-desktop">
 
-          {/* --- LOGO AREA --- */}
-          <div className="flex-shrink-0 flex items-center pr-4 md:pr-6 border-r border-transparent md:border-slate-200 dark:md:border-white/10">
+          {/* COL 1 — LOGO (flex-none) */}
+          <div
+            className="flex-none flex items-center pr-4 border-r border-transparent md:border-slate-200 dark:md:border-white/10 z-20"
+            data-testid="navbar-logo"
+          >
             <NavLink
               to="/"
               onClick={handleLogoClick}
@@ -193,57 +166,33 @@ const Navbar: React.FC = () => {
             </NavLink>
           </div>
 
-          {/* --- DESKTOP MENU --- */}
-          <div className="hidden xl:flex items-center flex-1 justify-end space-x-3">
-            <div className="flex items-center bg-white/40 dark:bg-[#000510]/40 border border-slate-200 dark:border-white/10 backdrop-blur-md rounded-xl p-1 mr-4 shadow-sm transition-colors hover:border-slate-300 dark:hover:border-white/20">
+          {/* COL 2 — NAV CENTRÉ (flex-1) */}
+          <div className="hidden xl:flex flex-1 items-center justify-center" data-testid="navbar-nav">
+            <div className={`flex items-center backdrop-blur-md rounded-xl p-1 shadow-sm transition-colors pointer-events-auto ${themeClasses.navPill.container}`}>
               {NAV_ITEMS.map((item) => (
                 <NavLinkItem key={item.path} item={item} locale={locale} />
               ))}
             </div>
-
-            <div className="flex items-center gap-2 border-l border-slate-200 dark:border-white/10 pl-4">
-
-              {/* THEME TOGGLE */}
-              <button
-                onClick={toggleTheme}
-                className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-500 hover:text-analytica-accent hover:bg-slate-100 dark:hover:bg-white/10 transition-all"
-                aria-label="Changer le thème"
-              >
-                {theme === ThemeMode.DARK ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-
-              {/* LANGUAGE TOGGLE */}
-              <button
-                onClick={toggleLanguage}
-                className="h-10 px-3 flex items-center justify-center rounded-lg text-xs font-mono font-bold text-slate-700 dark:text-slate-400 hover:text-analytica-accent hover:bg-slate-100 dark:hover:bg-white/10 transition-all"
-                aria-label="Changer la langue"
-              >
-                <span className={locale === 'fr' ? 'text-analytica-accent' : 'opacity-50'}>FR</span>
-                <span className="mx-1 opacity-30">|</span>
-                <span className={locale === 'en' ? 'text-analytica-accent' : 'opacity-50'}>EN</span>
-              </button>
-
-              <div className="hidden xl:flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-white/5 px-3 py-2 rounded-lg border border-slate-300 dark:border-white/10 cursor-help min-w-[80px] justify-center" title="Commande (Ctrl+K)">
-                <Command size={12} />
-                <span>CMD+K</span>
-              </div>
-            </div>
-
-            <div className="transform origin-right pl-2 pr-2">
-              <Button to="/contact" variant="shiny" icon={true} className="!py-2.5 !px-5 text-xs whitespace-nowrap">
-                {t('common.audit')}
-              </Button>
-            </div>
           </div>
 
-          <div className="xl:hidden flex items-center gap-4">
-            {/* MOBILE LANG TOGGLE */}
-            <button onClick={toggleLanguage} className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
-              {locale.toUpperCase()}
-            </button>
-            <button onClick={toggleTheme} className="text-slate-700 dark:text-slate-300 p-2">
-              {theme === ThemeMode.DARK ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+          {/* COL 3 — ACTIONS DROITES (flex-none, ml-auto pour pousser à droite) */}
+          <div className="hidden xl:flex flex-none items-center gap-2 ml-auto z-20" data-testid="navbar-actions">
+            <ProtocolDropdown />
+            <div
+              className={`flex items-center gap-2 text-xs font-mono px-3 py-2 rounded-lg border cursor-help min-w-[80px] justify-center ${themeClasses.surface.subtle} ${themeClasses.surface.border} ${themeClasses.text.secondary}`}
+              title="Commande (Ctrl+K)"
+            >
+              <Command size={12} />
+              <span>CMD+K</span>
+            </div>
+            <Button to="/contact" variant="shiny" icon={true} className="!py-2.5 !px-6 text-xs whitespace-nowrap">
+              {t('common.audit')}
+            </Button>
+          </div>
+
+          {/* --- MOBILE TOGGLES --- */}
+          <div className="xl:hidden flex items-center gap-4 z-10 ml-auto">
+            <ProtocolDropdown />
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="text-slate-900 dark:text-white p-2 border border-slate-200 dark:border-white/10 rounded-lg bg-white/10 backdrop-blur-md active:scale-95 transition-transform"

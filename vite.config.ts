@@ -38,8 +38,8 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: true,
       // Generate source maps for production debugging
       sourcemap: false,
-      // Chunk size warnings
-      chunkSizeWarningLimit: 500,
+      // Chunk size warnings - increased to 800KB to accommodate Three.js
+      chunkSizeWarningLimit: 800,
       rollupOptions: {
         output: {
           // Manual chunk splitting for better caching
@@ -48,8 +48,8 @@ export default defineConfig(({ mode }) => {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
             // Animation chunk
             'vendor-animation': ['framer-motion'],
-            // 3D chunk - heavy Three.js
-            'vendor-3d': ['three'],
+            // 3D chunk - split Three.js separately for better caching
+            'vendor-3d-core': ['three'],
             // UI utilities
             'vendor-ui': ['lucide-react'],
             // Data utilities

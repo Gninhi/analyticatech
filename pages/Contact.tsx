@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Mail, MapPin, Send, Loader2, Check, ShieldCheck, Lock } from 'lucide-react';
+import { Mail, MapPin, Send, Loader2, Check, ShieldCheck, Lock, AlertCircle } from 'lucide-react';
 import Card from '../components/UI/Card';
 import Button from '../components/UI/Button';
 import AnimatedHeading from '../components/UI/AnimatedHeading';
@@ -62,9 +62,9 @@ const Contact: React.FC = () => {
     if (!validateForm()) return;
     if (!checkRateLimit()) { setStatus('error'); setErrorMessage(t('contact.error.rate_limit')); return; }
 
-    const hasCaptcha = config.turnstile.siteKey && 
-                       config.turnstile.siteKey !== '' && 
-                       config.turnstile.siteKey !== 'YOUR_TURNSTILE_SITE_KEY_HERE';
+    const hasCaptcha = config.turnstile.siteKey &&
+      config.turnstile.siteKey !== '' &&
+      config.turnstile.siteKey !== 'YOUR_TURNSTILE_SITE_KEY_HERE';
 
     if (hasCaptcha && !turnstileToken) {
       setStatus('error');
@@ -74,10 +74,10 @@ const Contact: React.FC = () => {
 
     // Étape 1: Génération du Proof of Work (sécurité anti-bot)
     setStatus('computing');
-    
+
     try {
       const pow = await generateProofOfWork();
-      
+
       // Étape 2: Sanitization des inputs (protection XSS)
       const sanitizedData = {
         name: sanitizeInput(formData.name || ''),
@@ -172,24 +172,24 @@ const Contact: React.FC = () => {
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-500 dark:text-slate-300 ml-1">{t('contact.form.name')}</label>
-                        <input type="text" name="name" required value={formData.name} onChange={handleChange} className={`w-full bg-slate-50 dark:bg-[#000510] border ${fieldErrors.name ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl px-5 py-4 text-slate-900 dark:text-white focus:border-analytica-accent focus:ring-1 focus:ring-analytica-accent outline-none transition-all`} placeholder={t('contact.form.name_ph')} />
-                        {fieldErrors.name && <span className="text-red-500 text-xs ml-1">{fieldErrors.name}</span>}
+                        <label htmlFor="name" className="text-sm font-bold text-slate-500 dark:text-slate-300 ml-1">{t('contact.form.name')}</label>
+                        <input id="name" type="text" name="name" required value={formData.name} onChange={handleChange} className={`w-full bg-slate-50 dark:bg-[#000510] border ${fieldErrors.name ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl px-5 py-4 text-slate-900 dark:text-white focus:border-analytica-accent focus:ring-1 focus:ring-analytica-accent outline-none transition-all`} placeholder={t('contact.form.name_ph')} />
+                        {fieldErrors.name && <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1 font-medium"><AlertCircle size={14} /> {fieldErrors.name}</p>}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-slate-500 dark:text-slate-300 ml-1">{t('contact.form.email')}</label>
-                        <input type="email" name="email" required value={formData.email} onChange={handleChange} className={`w-full bg-slate-50 dark:bg-[#000510] border ${fieldErrors.email ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl px-5 py-4 text-slate-900 dark:text-white focus:border-analytica-accent focus:ring-1 focus:ring-analytica-accent outline-none transition-all`} placeholder={t('contact.form.email_ph')} />
-                        {fieldErrors.email && <span className="text-red-500 text-xs ml-1">{fieldErrors.email}</span>}
+                        <label htmlFor="email" className="text-sm font-bold text-slate-500 dark:text-slate-300 ml-1">{t('contact.form.email')}</label>
+                        <input id="email" type="email" name="email" required value={formData.email} onChange={handleChange} className={`w-full bg-slate-50 dark:bg-[#000510] border ${fieldErrors.email ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl px-5 py-4 text-slate-900 dark:text-white focus:border-analytica-accent focus:ring-1 focus:ring-analytica-accent outline-none transition-all`} placeholder={t('contact.form.email_ph')} />
+                        {fieldErrors.email && <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1 font-medium"><AlertCircle size={14} /> {fieldErrors.email}</p>}
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-500 dark:text-slate-300 ml-1">{t('contact.form.company')}</label>
-                      <input type="text" name="company" value={formData.company} onChange={handleChange} className="w-full bg-slate-50 dark:bg-[#000510] border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-4 text-slate-900 dark:text-white focus:border-analytica-accent focus:ring-1 focus:ring-analytica-accent outline-none transition-all" placeholder={t('contact.form.company_ph')} />
+                      <label htmlFor="company" className="text-sm font-bold text-slate-500 dark:text-slate-300 ml-1">{t('contact.form.company')}</label>
+                      <input id="company" type="text" name="company" value={formData.company} onChange={handleChange} className="w-full bg-slate-50 dark:bg-[#000510] border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-4 text-slate-900 dark:text-white focus:border-analytica-accent focus:ring-1 focus:ring-analytica-accent outline-none transition-all" placeholder={t('contact.form.company_ph')} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-500 dark:text-slate-300 ml-1">{t('contact.form.message')}</label>
-                      <textarea name="message" required rows={5} value={formData.message} onChange={handleChange} className={`w-full bg-slate-50 dark:bg-[#000510] border ${fieldErrors.message ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl px-5 py-4 text-slate-900 dark:text-white focus:border-analytica-accent focus:ring-1 focus:ring-analytica-accent outline-none resize-none transition-all`} placeholder={t('contact.form.message_ph')}></textarea>
-                      {fieldErrors.message && <span className="text-red-500 text-xs ml-1">{fieldErrors.message}</span>}
+                      <label htmlFor="message" className="text-sm font-bold text-slate-500 dark:text-slate-300 ml-1">{t('contact.form.message')}</label>
+                      <textarea id="message" name="message" required rows={5} value={formData.message} onChange={handleChange} className={`w-full bg-slate-50 dark:bg-[#000510] border ${fieldErrors.message ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl px-5 py-4 text-slate-900 dark:text-white focus:border-analytica-accent focus:ring-1 focus:ring-analytica-accent outline-none resize-none transition-all`} placeholder={t('contact.form.message_ph')}></textarea>
+                      {fieldErrors.message && <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1 font-medium"><AlertCircle size={14} /> {fieldErrors.message}</p>}
                     </div>
 
                     <Turnstile onSuccess={(token) => setTurnstileToken(token)} onError={() => setTurnstileToken('')} />

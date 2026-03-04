@@ -20,9 +20,10 @@ const ImmersiveBackground: React.FC = memo(() => {
       ([entry]) => setIsVisible(entry.isIntersecting),
       { threshold: 0 }
     );
-    
-    if (mountRef.current) {
-      intersectionObserver.observe(mountRef.current);
+
+    const mountElement = mountRef.current;
+    if (mountElement) {
+      intersectionObserver.observe(mountElement);
     }
 
     return () => intersectionObserver.disconnect();
@@ -30,6 +31,9 @@ const ImmersiveBackground: React.FC = memo(() => {
 
   useEffect(() => {
     if (!isVisible) return;
+
+    // Stable reference for cleanup
+    const mountElement = mountRef.current;
 
     let animationFrameId: number;
     let renderer: THREE.WebGLRenderer | null = null;
@@ -41,7 +45,7 @@ const ImmersiveBackground: React.FC = memo(() => {
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.innerWidth < 768;
-    
+
     // OPTIMIZED: Drastically reduce particles for better performance
     const particlesCount = prefersReducedMotion ? 30 : (isMobile ? 150 : 600);
 
@@ -51,29 +55,29 @@ const ImmersiveBackground: React.FC = memo(() => {
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.z = 30;
 
-    renderer = new THREE.WebGLRenderer({ 
+    renderer = new THREE.WebGLRenderer({
       antialias: false, // OPTIMIZED: Disable antialiasing for performance
-      alpha: true, 
+      alpha: true,
       powerPreference: "high-performance",
       stencil: false, // OPTIMIZED: No stencil buffer needed
       depth: true
     });
-    
+
     renderer.setClearColor(0x000000, 0);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // OPTIMIZED: Cap at 1.5
-    
+
     if (mountRef.current) {
       mountRef.current.appendChild(renderer.domElement);
     }
 
     particlesGeometry = new THREE.BufferGeometry();
     const posArray = new Float32Array(particlesCount * 3);
-    
+
     for (let i = 0; i < particlesCount * 3; i++) {
       posArray[i] = (Math.random() - 0.5) * 70;
     }
-    
+
     particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
 
     const isDark = document.documentElement.classList.contains('dark');
@@ -97,7 +101,7 @@ const ImmersiveBackground: React.FC = memo(() => {
       const now = Date.now();
       if (now - lastColorUpdate < 100) return; // Throttle
       lastColorUpdate = now;
-      
+
       const isDarkNow = document.documentElement.classList.contains('dark');
       if (particlesMaterial) {
         particlesMaterial.color.set(isDarkNow ? '#F26D3D' : '#03318C');
@@ -121,21 +125,21 @@ const ImmersiveBackground: React.FC = memo(() => {
       }
 
       const deltaTime = currentTime - lastFrameTime;
-      
+
       if (deltaTime >= frameInterval) {
         lastFrameTime = currentTime - (deltaTime % frameInterval);
-        
+
         if (particlesMesh && !prefersReducedMotion) {
           // OPTIMIZED: Slower rotation for better performance
           particlesMesh.rotation.y += 0.0003;
           particlesMesh.rotation.x += 0.0001;
         }
-        
+
         if (renderer && scene && camera) {
           renderer.render(scene, camera);
         }
       }
-      
+
       animationFrameId = requestAnimationFrame(animate);
     };
 
@@ -161,12 +165,12 @@ const ImmersiveBackground: React.FC = memo(() => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
       observer.disconnect();
-      
+
       // Complete cleanup
       if (renderer) {
         renderer.dispose();
-        if (mountRef.current && renderer.domElement.parentNode === mountRef.current) {
-          mountRef.current.removeChild(renderer.domElement);
+        if (mountElement && renderer.domElement.parentNode === mountElement) {
+          mountElement.removeChild(renderer.domElement);
         }
       }
       if (particlesGeometry) particlesGeometry.dispose();
@@ -175,8 +179,8 @@ const ImmersiveBackground: React.FC = memo(() => {
   }, [isVisible]);
 
   return (
-    <div 
-      ref={mountRef} 
+    <div
+      ref={mountRef}
       className="fixed inset-0 z-0 pointer-events-none transition-colors duration-700
         bg-[#f8fafc] dark:bg-[#000000]
         bg-[radial-gradient(circle_at_top,_#f1f5f9_0%,_#f8fafc_100%)] 

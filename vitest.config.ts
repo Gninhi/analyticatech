@@ -8,6 +8,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
+    server: {
+      deps: {
+        inline: ['@testing-library/jest-dom']
+      }
+    },
     include: ['tests/**/*.test.{ts,tsx}', 'tests/**/*.spec.{ts,tsx}'],
     exclude: ['tests/e2e/**', 'node_modules/**'],
     coverage: {

@@ -119,15 +119,17 @@ export const validateText = (text: string, minLength: number = 2, maxLength: num
 
 // --- 4. CLIENT SIDE RATE LIMITING (UX LAYER) ---
 // Simple couche UX, ne remplace pas la sécurité serveur
-const LAST_SUBMISSION_KEY = 'analytica_sec_last_sub';
-const COOLDOWN_MS = 60000; // 1 minute
+export const RATE_LIMIT_COOLDOWN_MS = 60000; // 1 minute
+const LAST_SUBMISSION_KEY = 'last_submission';
 
 export const checkRateLimit = (): boolean => {
   try {
     const lastSub = localStorage.getItem(LAST_SUBMISSION_KEY);
     if (!lastSub) return true;
-    const timeDiff = Date.now() - parseInt(lastSub, 10);
-    return timeDiff > COOLDOWN_MS;
+    const parsedTime = parseInt(lastSub, 10);
+    if (isNaN(parsedTime)) return true; // Handle invalid timestamp
+    const timeDiff = Date.now() - parsedTime;
+    return timeDiff >= RATE_LIMIT_COOLDOWN_MS;
   } catch {
     return true; 
   }

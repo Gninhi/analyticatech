@@ -12,15 +12,28 @@ interface I18nContextType {
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // Safe locale detection that works in all environments
   const [locale, setLocaleState] = useState<Locale>(() => {
-    const saved = localStorage.getItem('analytica_locale');
-    if (saved === 'fr' || saved === 'en') return saved as Locale;
-    
-    // Add safety check for navigator.language
-    const lang = typeof navigator !== 'undefined' ? (navigator.language || 'en') : 'en';
-    const browserLang = lang.split('-')[0];
-    
-    return (browserLang === 'fr' ? 'fr' : 'en') as Locale;
+    try {
+      // 1. Try localStorage first
+      if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('analytica_locale');
+        if (saved === 'fr' || saved === 'en') return saved as Locale;
+      }
+      
+      // 2. Fallback to navigator language
+      if (typeof navigator !== 'undefined') {
+        const lang = navigator.language || 'en';
+        const browserLang = lang.split('-')[0];
+        return (browserLang === 'fr' ? 'fr' : 'en') as Locale;
+      }
+      
+      // 3. Default fallback
+      return 'fr';
+    } catch (error) {
+      console.warn('[I18nProvider] Fallback to default locale due to error:', error);
+      return 'fr';
+    }
   });
 
   useEffect(() => {
