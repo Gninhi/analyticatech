@@ -11,7 +11,6 @@ import { usePageSEO } from '../hooks/usePageSEO';
 import { ContactSchema, ContactFormData } from '../utils/schemas';
 import { z } from 'zod';
 import { useI18n } from '../components/System/I18nProvider';
-import { supabase } from '../lib/supabase';
 import { config } from '../config/env';
 
 const Contact: React.FC = () => {
@@ -78,7 +77,7 @@ const Contact: React.FC = () => {
     try {
       const pow = await generateProofOfWork();
 
-      // Étape 2: Sanitization des inputs (protection XSS)
+      // Sanitization des inputs (protection XSS)
       const sanitizedData = {
         name: sanitizeInput(formData.name || ''),
         email: sanitizeInput(formData.email || ''),
@@ -88,26 +87,21 @@ const Contact: React.FC = () => {
 
       setStatus('submitting');
 
-      // Étape 3: Insertion sécurisée dans Supabase avec PoW
-      if (!supabase) {
-        throw new Error('Configuration Supabase manquante');
-      }
+      // Envoi vers l'API serverless qui gère : validation, BDD, et email
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...sanitizedData,
+          pow,
+          _gotcha: formData._gotcha,
+        }),
+      });
 
-      const { error: supabaseError } = await supabase
-        .from('leads')
-        .insert({
-          name: sanitizedData.name,
-          email: sanitizedData.email,
-          company: sanitizedData.company,
-          message: sanitizedData.message,
-          source: 'contact_form',
-          status: 'new',
-          // Stocker le PoW pour validation côté serveur si nécessaire
-          metadata: { pow_timestamp: pow.timestamp, pow_nonce: pow.nonce },
-        });
+      const result = await response.json();
 
-      if (supabaseError) {
-        throw new Error(supabaseError.message || 'Erreur lors de l\'envoi');
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi du message.');
       }
 
       recordSubmission();

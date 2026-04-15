@@ -1,20 +1,28 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
+import { Resend } from 'resend';
 import { ContactSchema } from '../utils/schemas';
 import { z } from 'zod';
 
 import { createClient } from '@supabase/supabase-js';
 
+// ── Server-side Configuration ─────────────────────────────────
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || '';
 const supabase = (SUPABASE_URL && SUPABASE_KEY)
   ? createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const CONTACT_EMAIL = process.env.CONTACT_EMAIL_DESTINATION || 'contact@analyticatech.fr';
+
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+
 /**
  * API SERVERLESS - SECURE CONTACT ENDPOINT
  * ----------------------------------------
  * Architecture: Zero-Trust & Validation Layer + Persistent Rate Limiting
+ * Flow: Validate → Rate Limit → PoW Check → Sanitize → Save to DB → Send Email
  */
 
 const POW_DIFFICULTY_PREFIX = '0000';
@@ -39,6 +47,67 @@ const verifyPoW = (timestamp: number, nonce: number, hash: string): boolean => {
   const input = `${timestamp}::${nonce}::ANALYTICATECH_SECURE`;
   const serverHash = crypto.createHash('sha256').update(input).digest('hex');
   return serverHash === hash;
+};
+
+/**
+ * Build the HTML email template for the contact notification.
+ */
+const buildEmailHtml = (name: string, email: string, company: string, message: string): string => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f4f4f5; margin: 0; padding: 40px 0; color: #18181b; }
+        .container { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 32px 40px; }
+        .header h1 { color: #818cf8; margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+        .header p { color: #94a3b8; margin: 8px 0 0; font-size: 13px; }
+        .body { padding: 32px 40px; }
+        .field { margin-bottom: 20px; }
+        .field-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #a1a1aa; font-weight: 600; margin-bottom: 4px; }
+        .field-value { font-size: 15px; color: #27272a; line-height: 1.5; }
+        .field-value a { color: #818cf8; text-decoration: none; }
+        .message-box { background: #f9fafb; border: 1px solid #e4e4e7; border-radius: 8px; padding: 16px; margin-top: 4px; }
+        .footer { padding: 20px 40px; background: #fafafa; text-align: center; font-size: 11px; color: #a1a1aa; border-top: 1px solid #f0f0f0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>AnalyticaTech</h1>
+          <p>Nouveau message depuis le formulaire de contact</p>
+        </div>
+        <div class="body">
+          <div class="field">
+            <div class="field-label">Nom</div>
+            <div class="field-value">${name}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Email</div>
+            <div class="field-value"><a href="mailto:${email}">${email}</a></div>
+          </div>
+          ${company ? `
+          <div class="field">
+            <div class="field-label">Entreprise</div>
+            <div class="field-value">${company}</div>
+          </div>
+          ` : ''}
+          <div class="field">
+            <div class="field-label">Message</div>
+            <div class="message-box">
+              <div class="field-value">${message.replace(/\n/g, '<br>')}</div>
+            </div>
+          </div>
+        </div>
+        <div class="footer">
+          Reçu via le formulaire de contact analyticatech.fr &bull; ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -110,17 +179,60 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const safeMessage = escapeHtml(validatedData.message);
     const safeCompany = validatedData.company ? escapeHtml(validatedData.company) : '';
 
-    // --- SIMULATION ENVOI EMAIL ---
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // 7. SAVE TO DATABASE (Supabase)
+    if (supabase) {
+      try {
+        const { error: insertError } = await supabase
+          .from('leads')
+          .insert({
+            name: safeName,
+            email: safeEmail,
+            company: safeCompany || null,
+            message: safeMessage,
+            source: 'contact_form',
+            status: 'new',
+            metadata: {
+              pow_timestamp: validatedData.pow.timestamp,
+              pow_nonce: validatedData.pow.nonce,
+              ip: clientIp,
+            },
+          });
 
-    // Log only in development
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[SECURE MAIL] From: ${safeEmail} (IP: ${clientIp})`);
-      console.log(`[DATA] Name: ${safeName}, Company: ${safeCompany}`);
-      console.log(`[CONTENT] ${safeMessage.substring(0, 50)}...`);
+        if (insertError) {
+          console.error('[Supabase Insert Error]', insertError);
+          // Don't fail the request if DB insert fails — the email is more critical
+        }
+      } catch (dbInsertError) {
+        console.error('[Supabase Insert Exception]', dbInsertError);
+      }
     }
 
-    return res.status(200).json({ success: true, message: 'Message reçu et sécurisé.' });
+    // 8. SEND EMAIL VIA RESEND
+    if (resend) {
+      const { data: emailData, error: emailError } = await resend.emails.send({
+        from: 'AnalyticaTech <onboarding@resend.dev>',  // Use verified domain in production
+        to: [CONTACT_EMAIL],
+        replyTo: validatedData.email,  // Use raw email for reply-to (not escaped)
+        subject: `Nouveau contact — ${safeCompany || safeName}`,
+        html: buildEmailHtml(safeName, safeEmail, safeCompany, safeMessage),
+      });
+
+      if (emailError) {
+        console.error('[Resend Error]', emailError);
+        return res.status(500).json({ error: 'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.' });
+      }
+
+      // Log only in development
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[EMAIL SENT] ID: ${emailData?.id}, To: ${CONTACT_EMAIL}`);
+      }
+    } else {
+      // Resend not configured — log warning but don't fail
+      console.warn('[WARN] Resend API key not configured. Email was NOT sent.');
+      console.warn('[WARN] Set RESEND_API_KEY in your environment variables.');
+    }
+
+    return res.status(200).json({ success: true, message: 'Message reçu et envoyé avec succès.' });
 
   } catch (error) {
     if (error instanceof z.ZodError) {
